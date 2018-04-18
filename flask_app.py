@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def homepage():
-    return 'One day this will be a microblog site.'
+    return render_template('index.html')
 
 @app.route('/aboutme')
 @app.route('/about_me')
