@@ -1,3 +1,6 @@
+# Run this script by typing the following in a Bash console:
+# python database_import_courses.py
+
 from flask_app import db
 from flask_app import Course
 import constants
