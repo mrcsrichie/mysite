@@ -28,8 +28,9 @@ def about_me():
 
 @app.route('/class_schedule')
 def class_schedule():
+    courses = Course.query.all()
     return render_template('class_schedule.html',
-                           courses=constants.COURSES)
+                           courses=courses)
 
 @app.route('/register')
 def register():
