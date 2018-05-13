@@ -44,6 +44,12 @@ class Song(db.Model):
     artist_name = db.Column(db.String(80))
     youtube_url = db.Column(db.String(300))
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(15))
+    email = db.Column(db.String(80))
+    password_hash = db.Column(db.String(128))
+
 class RegistrationForm(FlaskForm):
     username = StringField(
         'Username', validators=[InputRequired(), Length(min=4, max=15)])
