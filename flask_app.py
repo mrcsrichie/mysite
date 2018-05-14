@@ -9,6 +9,7 @@ from flask_login import LoginManager, UserMixin, current_user, login_user, logou
 from flask_nav import Nav
 from flask_nav.elements import Navbar, Subgroup, View
 from flask_sqlalchemy import SQLAlchemy
+from flask_sslify import SSLify
 from flask_wtf import FlaskForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms import StringField, PasswordField, SubmitField
@@ -23,6 +24,8 @@ db = SQLAlchemy(app)
 login = LoginManager(app)
 
 Bootstrap(app)
+
+SSLify(app)
 
 nav = Nav(app)
 
