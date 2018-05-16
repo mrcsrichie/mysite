@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask
 from flask import flash
 from flask import redirect
@@ -32,6 +33,7 @@ def create_navbar():
     home_view = View('Home', 'homepage')
     login_view = View('Login', 'login')
     logout_view = View('Logout', 'logout')
+    posts_view = View('Posts', 'posts')
     register_view = View('Register', 'register')
     about_me_view = View('About Me', 'about_me')
     class_schedule_view = View('Class Schedule', 'class_schedule')
@@ -41,7 +43,7 @@ def create_navbar():
                              class_schedule_view,
                              top_ten_songs_view)
     if current_user.is_authenticated:
-        return Navbar('MySite', home_view, misc_subgroup, logout_view)
+        return Navbar('MySite', home_view, posts_view, misc_subgroup, logout_view)
     else:
         return Navbar('MySite', home_view, misc_subgroup, login_view, register_view)
 
@@ -72,6 +74,12 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.String(280))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
 class RegisterForm(FlaskForm):
     username = StringField(
         'Username', validators=[InputRequired(), Length(min=4, max=15)])
@@ -91,13 +99,18 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired()])
     submit = SubmitField('Sign in')
 
+class PostForm(FlaskForm):
+    message = StringField('Message', validators=[InputRequired(), Length(max=280)])
+    submit = SubmitField('Post')
+
 @login.user_loader
 def load_user(user_id):
     return User.query.filter_by(id=int(user_id)).first()
 
 @app.route('/')
 def homepage():
-    return render_template('index.html')
+    posts = Post.query.order_by(Post.timestamp.desc()).limit(20).all()
+    return render_template('index.html', posts=posts)
 
 @app.route('/aboutme')
 @app.route('/about_me')
@@ -128,6 +141,19 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('homepage'))
+
+@app.route('/posts', methods=['GET', 'POST'])
+def posts():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    form = PostForm()
+    posts = Post.query.filter_by(user_id=current_user.id).all()
+    if form.validate_on_submit():
+        new_post = Post(user_id=current_user.id, body=form.message.data)
+        db.session.add(new_post)
+        db.session.commit()
+        posts.append(new_post)
+    return render_template('posts.html', form=form, posts=posts)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
