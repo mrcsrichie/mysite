@@ -67,6 +67,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(15))
     email = db.Column(db.String(150))
     password_hash = db.Column(db.String(128))
+    posts = db.relationship('Post', backref='author')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -147,13 +148,11 @@ def posts():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
     form = PostForm()
-    posts = Post.query.filter_by(user_id=current_user.id).all()
     if form.validate_on_submit():
         new_post = Post(user_id=current_user.id, body=form.message.data)
         db.session.add(new_post)
         db.session.commit()
-        posts.append(new_post)
-    return render_template('posts.html', form=form, posts=posts)
+    return render_template('posts.html', form=form, posts=current_user.posts)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
