@@ -13,7 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_sslify import SSLify
 from flask_wtf import FlaskForm
 from werkzeug.security import check_password_hash, generate_password_hash
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import BooleanField, StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Email, Length, ValidationError
 
 app = Flask(__name__)
@@ -101,6 +101,7 @@ class RegisterForm(FlaskForm):
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[InputRequired()])
     password = PasswordField('Password', validators=[InputRequired()])
+    remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign in')
 
 class PostForm(FlaskForm):
@@ -137,7 +138,7 @@ def login():
         if not user or not user.check_password(form.password.data):
             flash('Username or password is incorrect.', 'danger')
             return render_template('login.html', form=form)
-        login_user(user)
+        login_user(user, remember=form.remember_me.data)
         return redirect(url_for('homepage'))
     return render_template('login.html', form=form)
 
