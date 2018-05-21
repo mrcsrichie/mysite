@@ -5,6 +5,7 @@ from flask import redirect
 from flask import url_for
 from flask import render_template
 from flask_bootstrap import Bootstrap
+from flask_gravatar import Gravatar
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user
 from flask_nav import Nav
 from flask_nav.elements import Navbar, Subgroup, View
@@ -25,6 +26,8 @@ login = LoginManager(app)
 Bootstrap(app)
 
 SSLify(app)
+
+gravatar = Gravatar(app, size=30)
 
 nav = Nav(app)
 
