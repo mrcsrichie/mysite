@@ -5,16 +5,16 @@ from flask import redirect
 from flask import render_template
 from flask import url_for
 from flask_bootstrap import Bootstrap
+from flask_gravatar import Gravatar
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user
 from flask_nav import Nav
 from flask_nav.elements import Navbar, Subgroup, View
 from flask_sqlalchemy import SQLAlchemy
 from flask_sslify import SSLify
 from flask_wtf import FlaskForm
-from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Email, Length
-from wtforms.validators import ValidationError
+from werkzeug.security import check_password_hash, generate_password_hash
+from wtforms import BooleanField, StringField, PasswordField, SubmitField
+from wtforms.validators import InputRequired, Email, Length, ValidationError
 
 app = Flask(__name__)
 app.config.from_object('config.BaseConfig')
@@ -26,6 +26,8 @@ login = LoginManager(app)
 Bootstrap(app)
 
 SSLify(app)
+
+gravatar = Gravatar(app, size=30)
 
 nav = Nav(app)
 
@@ -47,6 +49,7 @@ def create_navbar():
         return Navbar('MySite', home_view, posts_view, misc_subgroup, logout_view)
     else:
         return Navbar('MySite', home_view, misc_subgroup, login_view, register_view)
+
 class Course(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     period = db.Column(db.Integer)
@@ -64,8 +67,9 @@ class Song(db.Model):
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(15))
-    email = db.Column(db.String(80))
+    email = db.Column(db.String(150))
     password_hash = db.Column(db.String(128))
+    posts = db.relationship('Post', backref='author')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -79,11 +83,12 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-class RegistrationForm(FlaskForm):
+
+class RegisterForm(FlaskForm):
     username = StringField(
         'Username', validators=[InputRequired(), Length(min=4, max=15)])
     email = StringField(
-        'Email', validators=[InputRequired(), Email()])
+        'Email', validators=[InputRequired(), Email(), Length(max=150)])
     password = PasswordField(
         'Password', validators=[InputRequired(), Length(min=8, max=80)])
     submit = SubmitField('Register')
@@ -96,6 +101,7 @@ class RegistrationForm(FlaskForm):
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[InputRequired()])
     password = PasswordField('Password', validators=[InputRequired()])
+    remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign in')
 
 class PostForm(FlaskForm):
@@ -132,7 +138,7 @@ def login():
         if not user or not user.check_password(form.password.data):
             flash('Username or password is incorrect.', 'danger')
             return render_template('login.html', form=form)
-        login_user(user)
+        login_user(user, remember=form.remember_me.data)
         return redirect(url_for('homepage'))
     return render_template('login.html', form=form)
 
@@ -146,17 +152,17 @@ def posts():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
     form = PostForm()
-    posts = Post.query.filter_by(user_id=current_user.id).all()
     if form.validate_on_submit():
         new_post = Post(user_id=current_user.id, body=form.message.data)
         db.session.add(new_post)
         db.session.commit()
-        posts.append(new_post)
-    return render_template('posts.html', form=form, posts=posts)
+    return render_template('posts.html', form=form, posts=current_user.posts)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegistrationForm()
+    if current_user.is_authenticated:
+        return redirect(url_for('homepage'))
+    form = RegisterForm()
     if form.validate_on_submit():
         new_user = User(
             username=form.username.data,

@@ -1,13 +1,20 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-{% block title %}Login{% endblock %}
+
+{% block title %}Posts{% endblock %}
 {% block content %}
 <div class="container">
 <h3>Make a post</h3>
 {{ wtf.quick_form(form, button_map={'submit':'primary'}) }}
 <h3>Previous posts</h3>
+<table class="table">
 {% for post in posts %}
-<p>{{ post.body }}</p>
+<tr>
+    <td>{{ post.body }}</td>
+    <td>{{ post.timestamp.strftime('%-I:%M %p') }}</td>
+    <td>{{ post.timestamp.strftime('%b %d') }}</td>
+</tr>
 {% endfor %}
+</table>
 </div>
 {% endblock %}

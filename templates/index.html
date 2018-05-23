@@ -3,13 +3,21 @@
 {% block content %}
 <div class="container">
 {% if current_user.is_authenticated %}
-<p>Welcome, {{ current_user.username}}!</p>
+<p>Welcome, {{ current_user.username }}!</p>
 {% else %}
 <p>Welcome to MySite!</p>
 {% endif %}
 <h3>Recent posts from users</h3>
+<table class="table">
 {% for post in posts %}
-<p>{{ post.body }}</p>
+<tr>
+    <td><img src='{{ post.author.email | gravatar }}'></td>
+    <td>{{ post.body }}</td>
+    <td>{{ post.author.username }}</td>
+    <td>{{ post.timestamp.strftime('%-I:%M %p') }}</td>
+    <td>{{ post.timestamp.strftime('%b %d') }}</td>
+</tr>
 {% endfor %}
+</table>
 </div>
 {% endblock %}
